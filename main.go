@@ -29,6 +29,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	// TODO: runMigration
 	// logger, _ := zap.NewDevelopment()
 	// manager := usago.NewChannelManager(
 	// 	"amqp://guest:guest@localhost:5672/",
