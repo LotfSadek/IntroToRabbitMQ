@@ -27,7 +27,7 @@ func main() {
 	logger.Info("Connecting to RabbitMQ")
 	// var a error
 	// a= new error
-	conn, err := amqp.Dial("amqp://guest:guest@20.203.7.218:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	// ALWAYS MAKE SURE TO HANDLE THE ERROR
 	if err != nil {
 		logger.Error("error Creating Connection", zap.Error(err))
