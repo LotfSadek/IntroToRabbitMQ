@@ -24,8 +24,14 @@ func TestPublishToRabbitMQ(t *testing.T) {
 	defer ch.Close()
 	// exchange name is notifs
 	// routing key is message
-	err = ch.Publish("Notifications", "message", true, true, amqp.Publishing{
-		Body: []byte("sending this message at " + time.Now().Format(time.RFC3339Nano)),
-	})
+	err = ch.Publish(
+		"Notifications",
+		"message",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte("sending this message at " + time.Now().Format(time.RFC3339Nano)),
+		})
 	assert.Nil(t, err)
 }
