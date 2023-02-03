@@ -1,8 +1,12 @@
 package main
 
 import (
-	//"log"
+	"database/sql"
+	"fmt"
+	"log"
+	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
 )
@@ -14,6 +18,63 @@ import (
 // }
 
 func main() {
+	// Postgre DB connection
+	connStr := "user=postgres password=1234rewQ host=localhost port=5432 dbname=RabbitMQLogger sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
+	// logger, _ := zap.NewDevelopment()
+	// manager := usago.NewChannelManager(
+	// 	"amqp://guest:guest@localhost:5672/",
+	// 	logger,
+	// )
+
+	// bldr := usago.NewChannelBuilder().WithQueue(
+	// 	"golang-queue1",
+	// 	false,
+	// 	false,
+	// 	false,
+	// 	false,
+	// 	nil,
+	// ).WithConfirms(true)
+
+	// chnl, err := manager.NewChannel(*bldr)
+	// if err != nil {
+	// 	fmt.Printf("failed to create channel")
+	// 	return
+	// }
+
+	// // consume
+	// consumer, err := chnl.RegisterConsumer(
+	// 	"golang-queue1",
+	// 	"",
+	// 	true,
+	// 	false,
+	// 	false,
+	// 	false,
+	// 	nil,
+	// )
+	// msgs := <-consumer
+
+	// // publish
+	// body := "Hello World!"
+	// sno, err := chnl.Publish(
+	// 	"Notifications",
+	// 	"golang-queue1",
+	// 	false, // mandatory
+	// 	false, // immediate
+	// 	amqp091.Publishing{
+	// 		ContentType: "text/plain",
+	// 		Body:        []byte(body),
+	// 	},
+	// )
+	// fmt.Printf("The SNO is %v", sno)
 	// New Development Creates a suggared logger -> heavy on I/O ops
 	// time		Log Level 	Message
 	logger, err := zap.NewProduction()
@@ -40,7 +101,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("error Creating Channel", zap.Error(err)) // log.err + panic
 	}
-	// We can assume ch is valid
+	// // We can assume ch is valid
 	defer ch.Close()
 
 	// Declare an exchange
@@ -117,11 +178,20 @@ func main() {
 			// if the channel is empty then execution is blocked forever  :)
 			// if not empty it will pull one
 			body := msg.Body
+			now := time.Now()
 			// the "business logic"
 			if len(body) > 0 {
 				logger.Info("Message", zap.String("body", string(msg.Body)))
-				msg.Ack(false)
+				_, err = db.Exec("INSERT INTO logs(date,body) VALUES($1,$2)", now.Format("2006-01-02 15:04:05"), string(msg.Body))
+				if err != nil {
+					log.Fatalf("Error inserting data: %v", err)
+					msg.Nack(false, true)
+					continue
+				}
+				fmt.Println("Data inserted successfully!")
+				msg.Ack(true)
 				// success ack - not nack
+				//
 			}
 		}
 	}()
