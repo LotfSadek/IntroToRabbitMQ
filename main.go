@@ -27,7 +27,7 @@ func main() {
 	logger.Info("Connecting to RabbitMQ")
 	// var a error
 	// a= new error
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@20.203.7.218:5672/")
 	// ALWAYS MAKE SURE TO HANDLE THE ERROR
 	if err != nil {
 		logger.Error("error Creating Connection", zap.Error(err))
@@ -43,6 +43,19 @@ func main() {
 	// We can assume ch is valid
 	defer ch.Close()
 
+	// Declare an exchange
+	err = ch.ExchangeDeclare(
+		"Notifications",
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		logger.Fatal("error Declaring Exchange", zap.Error(err))
+	}
 	// TODO: Bind an exchange to the queue, you might have to use a diffrenet name for the queue
 	q, err := ch.QueueDeclare(
 		"golang-queue1",

@@ -9,7 +9,7 @@ import (
 )
 
 func TestPublishToRabbitMQ(t *testing.T) {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@20.203.7.218:5672/")
 	assert.Nil(t, err) // fail test if err not nil
 	// ALWAYS MAKE SURE TO HANDLE THE ERROR
 	if err != nil {
@@ -24,8 +24,14 @@ func TestPublishToRabbitMQ(t *testing.T) {
 	defer ch.Close()
 	// exchange name is notifs
 	// routing key is message
-	err = ch.Publish("Notifications", "message", true, true, amqp.Publishing{
-		Body: []byte("sending this message at " + time.Now().Format(time.RFC3339Nano)),
-	})
+	err = ch.Publish(
+		"Notifications",
+		"message",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte("sending this message at " + time.Now().Format(time.RFC3339Nano)),
+		})
 	assert.Nil(t, err)
 }
