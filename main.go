@@ -106,7 +106,7 @@ func main() {
 
 	// Declare an exchange
 	err = ch.ExchangeDeclare(
-		"Notifications",
+		"Notifications1",
 		"topic",
 		true,
 		false,
@@ -131,11 +131,11 @@ func main() {
 	}
 
 	if err := ch.QueueBind(
-		q.Name,          // queue name
-		"#",             // binding key
-		"Notifications", // exchange
-		false,           // no-wait
-		nil,             // arguments
+		q.Name,           // queue name
+		"#",              // binding key
+		"Notifications1", // exchange
+		false,            // no-wait
+		nil,              // arguments
 	); err != nil {
 		logger.Fatal("Failed to bind a queue: %v", zap.Error(err))
 	}

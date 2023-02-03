@@ -25,7 +25,7 @@ func TestPublishToRabbitMQ(t *testing.T) {
 	// exchange name is notifs
 	// routing key is message
 	err = ch.Publish(
-		"Notifications",
+		"Notifications1",
 		"message",
 		false,
 		false,
