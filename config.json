@@ -1,0 +1,4 @@
+{
+    "ConnectionString": "user=postgres password=1234rewQ host=localhost port=5432 dbname=RabbitMQLogger sslmode=disable",
+    "AMQPURL": "amqp://guest:guest@localhost:5672/"
+}

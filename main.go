@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/streadway/amqp"
@@ -18,9 +17,14 @@ import (
 // }
 
 func main() {
+	// loading the config file
+	config, err := LoadConfig("config.json")
+	if err != nil {
+		panic(err)
+	}
+
 	// Postgre DB connection
-	connStr := "user=postgres password=1234rewQ host=localhost port=5432 dbname=RabbitMQLogger sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+	db, err := sql.Open("postgres", config.ConnectionString)
 	if err != nil {
 		panic(err)
 	}
@@ -30,52 +34,8 @@ func main() {
 		panic(err)
 	}
 	// TODO: runMigration
-	// logger, _ := zap.NewDevelopment()
-	// manager := usago.NewChannelManager(
-	// 	"amqp://guest:guest@localhost:5672/",
-	// 	logger,
-	// )
+	migrationsManager() // initializing migrations
 
-	// bldr := usago.NewChannelBuilder().WithQueue(
-	// 	"golang-queue1",
-	// 	false,
-	// 	false,
-	// 	false,
-	// 	false,
-	// 	nil,
-	// ).WithConfirms(true)
-
-	// chnl, err := manager.NewChannel(*bldr)
-	// if err != nil {
-	// 	fmt.Printf("failed to create channel")
-	// 	return
-	// }
-
-	// // consume
-	// consumer, err := chnl.RegisterConsumer(
-	// 	"golang-queue1",
-	// 	"",
-	// 	true,
-	// 	false,
-	// 	false,
-	// 	false,
-	// 	nil,
-	// )
-	// msgs := <-consumer
-
-	// // publish
-	// body := "Hello World!"
-	// sno, err := chnl.Publish(
-	// 	"Notifications",
-	// 	"golang-queue1",
-	// 	false, // mandatory
-	// 	false, // immediate
-	// 	amqp091.Publishing{
-	// 		ContentType: "text/plain",
-	// 		Body:        []byte(body),
-	// 	},
-	// )
-	// fmt.Printf("The SNO is %v", sno)
 	// New Development Creates a suggared logger -> heavy on I/O ops
 	// time		Log Level 	Message
 	logger, err := zap.NewProduction()
@@ -89,7 +49,7 @@ func main() {
 	logger.Info("Connecting to RabbitMQ")
 	// var a error
 	// a= new error
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(config.AMQPURL)
 	// ALWAYS MAKE SURE TO HANDLE THE ERROR
 	if err != nil {
 		logger.Error("error Creating Connection", zap.Error(err))
@@ -140,16 +100,6 @@ func main() {
 	); err != nil {
 		logger.Fatal("Failed to bind a queue: %v", zap.Error(err))
 	}
-	// q, err := ch.QueueDeclare(
-	// 	"golang-queue", // name
-	// 	false,          // durable
-	// 	false,          // delete when unused
-	// 	false,          // exclusive
-	// 	false,          // no-wait
-	// 	nil,            // arguments
-	// )
-	// failOnError(err, "Failed to declare a queue")
-
 	msgs, err := ch.Consume(
 		q.Name, // queue
 		"",     // consumer
@@ -179,17 +129,22 @@ func main() {
 			// if the channel is empty then execution is blocked forever  :)
 			// if not empty it will pull one
 			body := msg.Body
-			now := time.Now()
 			// the "business logic"
 			if len(body) > 0 {
 				logger.Info("Message", zap.String("body", string(msg.Body)))
-				_, err = db.Exec("INSERT INTO logs(date,body) VALUES($1,$2)", now.Format("2006-01-02 15:04:05"), string(msg.Body))
+				_, err = db.Exec("INSERT INTO logs(body) VALUES($1)", string(msg.Body))
 				if err != nil {
 					log.Fatalf("Error inserting data: %v", err)
 					msg.Nack(false, true)
 					continue
 				}
 				fmt.Println("Data inserted successfully!")
+				newMigration := Migration{
+					Key:  "new migration",
+					Up:   `INSERT INTO logs(body) VALUES ("Hello")`,
+					Down: `DROP TABLE logs`,
+				}
+				Migrations = append(Migrations, newMigration)
 				msg.Ack(true)
 				// success ack - not nack
 				//

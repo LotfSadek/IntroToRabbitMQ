@@ -9,6 +9,11 @@ import (
 )
 
 func TestPublishToRabbitMQ(t *testing.T) {
+	// loading the config file
+	// config, err := LoadConfig("config.json")
+	// if err != nil {
+	// 	panic(err)
+	// }
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	assert.Nil(t, err) // fail test if err not nil
 	// ALWAYS MAKE SURE TO HANDLE THE ERROR
