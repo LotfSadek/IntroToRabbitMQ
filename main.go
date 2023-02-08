@@ -139,12 +139,14 @@ func main() {
 					continue
 				}
 				fmt.Println("Data inserted successfully!")
-				newMigration := Migration{
-					Key:  "new migration",
-					Up:   `INSERT INTO logs(body) VALUES ("Hello")`,
-					Down: `DROP TABLE logs`,
-				}
-				Migrations = append(Migrations, newMigration)
+				// newMigration := Migration{
+				// 	Key:  "new migration",
+				// 	Up:   `INSERT INTO logs(body) VALUES ("Hello")`,
+				// 	Down: `DROP TABLE logs`,
+				// }
+				// Migrations = append(Migrations, newMigration)
+				// db exec to add migration
+				// comment out adding migration in for loop
 				msg.Ack(true)
 				// success ack - not nack
 				//
